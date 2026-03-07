@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPiChat - Full Test Client</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #242444;
+            --accent: #6c5ce7;
+            --accent-hover: #8b7ff5;
+            --admin: #e74c3c;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --success: #00c853;
+            --error: #ff5252;
+            --warning: #ffc107;
+            --border: #3a3a5c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--accent), #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+        }
+
+        .admin-badge {
+            background: var(--admin);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 15px;
+            height: calc(100vh - 120px);
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        /* Forms */
+        .form-section {
+            margin-bottom: 15px;
+        }
+
+        .form-section h3 {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            margin-bottom: 8px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            padding: 8px 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--error);
+        }
+
+        .btn-admin {
+            background: var(--admin);
+        }
+
+        .btn-sm {
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            width: auto;
+        }
+
+        /* Lists */
+        .list-item {
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .list-item:hover {
+            border-color: var(--accent);
+        }
+
+        .list-item.active {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.2);
+        }
+
+        .list-item .title {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .list-item .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .list-item .actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 6px;
+        }
+
+        /* Messages */
+        .messages-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            max-width: 75%;
+        }
+
+        .message.own {
+            background: var(--accent);
+            margin-left: auto;
+        }
+
+        .message .sender {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+
+        .message.own .sender {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message .content {
+            word-break: break-word;
+            font-size: 0.9rem;
+        }
+
+        .message .time {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            text-align: right;
+        }
+
+        .message.own .time {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .message.system {
+            background: transparent;
+            border: 1px dashed var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            max-width: 100%;
+        }
+
+        .message-input {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .message-input input {
+            flex: 1;
+            border-radius: 20px;
+            padding: 10px 14px;
+        }
+
+        .message-input button {
+            border-radius: 20px;
+            padding: 10px 20px;
+            width: auto;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+            font-size: 0.85rem;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 30px;
+            font-size: 0.85rem;
+        }
+
+        .divider {
+            border-top: 1px solid var(--border);
+            margin: 12px 0;
+        }
+
+        /* User list */
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+
+        .user-item .username {
+            font-size: 0.85rem;
+        }
+
+        .user-item .badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .user-item .badge.admin {
+            background: var(--admin);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🍓 RPiChat Admin Console</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot" id="apiStatus"></div>
+                    <span>API</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="wsStatus"></div>
+                    <span>WS</span>
+                </div>
+                <span id="userInfo">Not logged in</span>
+                <span id="adminBadge" class="admin-badge" style="display: none;">ADMIN</span>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Left Panel: Auth & Users -->
+            <div class="panel">
+                <div class="panel-header">Account & Users</div>
+                <div class="panel-content">
+                    <!-- Auth Section -->
+                    <div id="authSection">
+                        <div class="form-section">
+                            <h3>Authentication</h3>
+                            <div class="input-group">
+                                <input type="text" id="username" placeholder="Username (min 3 chars)" />
+                            </div>
+                            <div class="input-group">
+                                <input type="password" id="password" placeholder="Password (min 6 chars)" />
+                            </div>
+                            <div class="btn-row">
+                                <button class="btn btn-secondary" onclick="register()">Register</button>
+                                <button class="btn" onclick="login()">Login</button>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="form-section">
+                            <h3>Quick Admin Login</h3>
+                            <button class="btn btn-admin" onclick="initAndLoginAdmin()">Init Admin & Login</button>
+                            <p style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 5px;">Creates
+                                admin/admin123 if not exists</p>
+                        </div>
+                    </div>
+
+                    <!-- Logged In Section -->
+                    <div id="loggedInSection" style="display: none;">
+                        <div class="btn-row" style="margin-bottom: 10px;">
+                            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                            <button class="btn" onclick="refreshAll()">Refresh</button>
+                        </div>
+
+                        <div class="tabs">
+                            <button class="tab active" onclick="showTab('users')">Users</button>
+                            <button class="tab" onclick="showTab('search')">Search</button>
+                        </div>
+
+                        <div id="usersTab" class="tab-content active">
+                            <div id="usersList"></div>
+                        </div>
+
+                        <div id="searchTab" class="tab-content">
+                            <div class="form-section">
+                                <div class="input-group">
+                                    <input type="text" id="searchQuery" placeholder="Search username..."
+                                        onkeyup="searchUsers()" />
+                                </div>
+                            </div>
+                            <div id="searchResults"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Messages -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span id="chatTitle">Select a chat</span>
+                    <span id="chatId" style="font-size: 0.75rem; color: var(--text-secondary);"></span>
+                </div>
+                <div class="messages-container">
+                    <div class="messages-list" id="messagesList">
+                        <div class="empty-state">Select a chat to start messaging</div>
+                    </div>
+                    <div class="message-input" id="messageInput" style="display: none;">
+                        <input type="text" id="messageText" placeholder="Type a message..."
+                            onkeypress="if(event.key==='Enter')sendMessage()" />
+                        <button class="btn" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Chats -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Chats</span>
+                    <button class="btn btn-sm" onclick="loadChats()">↻</button>
+                </div>
+                <div class="panel-content">
+                    <div id="chatListSection" style="display: none;">
+                        <div id="chatList"></div>
+
+                        <div class="divider"></div>
+
+                        <div class="form-section">
+                            <h3>Create Chat</h3>
+                            <div class="input-group">
+                                <input type="text" id="newChatName" placeholder="Chat name" />
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="newChatParticipants" placeholder="Users (comma-separated)" />
+                            </div>
+                            <button class="btn" onclick="createChat()">Create</button>
+                        </div>
+
+                        <!-- Chat Edit Section -->
+                        <div id="chatEditSection" style="display: none;">
+                            <div class="divider"></div>
+                            <div class="form-section">
+                                <h3>Edit Chat</h3>
+                                <div class="input-group">
+                                    <input type="text" id="editChatName" placeholder="New name" />
+                                </div>
+                                <button class="btn" onclick="updateChat()">Update Name</button>
+                            </div>
+                            <div class="form-section">
+                                <h3>Manage Participants</h3>
+                                <div id="participantsList"></div>
+                                <div class="input-group" style="margin-top: 8px;">
+                                    <input type="text" id="addParticipantName" placeholder="Username to add" />
+                                </div>
+                                <button class="btn" onclick="addParticipant()">Add Participant</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="chatListPlaceholder" class="empty-state">Login to see chats</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:8000';
+        let token = localStorage.getItem('token');
+        let currentUsername = localStorage.getItem('username');
+        let isAdmin = localStorage.getItem('isAdmin') === 'true';
+        let currentChatId = null;
+        let ws = null;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            checkApiStatus();
+            if (token && currentUsername) {
+                showLoggedIn();
+                refreshAll();
+            }
+        });
+
+        // API Status
+        async function checkApiStatus() {
+            try {
+                const res = await fetch(`${API}/health`);
+                document.getElementById('apiStatus').classList.toggle('connected', res.ok);
+            } catch { document.getElementById('apiStatus').classList.remove('connected'); }
+        }
+
+        // Toast
+        function toast(msg, type = 'info') {
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // Tabs
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        // Auth
+        async function register() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            if (!username || username.length < 3) return toast('Username min 3 chars', 'error');
+            if (!password || password.length < 6) return toast('Password min 6 chars', 'error');
+
+            try {
+                const res = await fetch(`${API}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (res.ok) toast('Registered! Now login.', 'success');
+                else toast((await res.json()).detail || 'Registration failed', 'error');
+            } catch { toast('Connection error', 'error'); }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            if (!username || username.length < 3) return toast('Username min 3 chars', 'error');
+            if (!password || password.length < 6) return toast('Password min 6 chars', 'error');
+
+            try {
+                const res = await fetch(`${API}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    token = data.access_token;
+                    currentUsername = username;
+                    // Parse JWT to get is_admin
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    isAdmin = payload.is_admin || false;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('isAdmin', isAdmin);
+                    showLoggedIn();
+                    refreshAll();
+                    toast('Logged in!', 'success');
+                } else toast((await res.json()).detail || 'Login failed', 'error');
+            } catch { toast('Connection error', 'error'); }
+        }
+
+        async function initAndLoginAdmin() {
+            try {
+                await fetch(`${API}/api/auth/init-admin`, { method: 'POST' });
+                document.getElementById('username').value = 'admin';
+                document.getElementById('password').value = 'admin123';
+                await login();
+            } catch { toast('Failed to init admin', 'error'); }
+        }
+
+        function logout() {
+            token = null; currentUsername = null; isAdmin = false; currentChatId = null;
+            localStorage.clear();
+            if (ws) ws.close();
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('loggedInSection').style.display = 'none';
+            document.getElementById('chatListSection').style.display = 'none';
+            document.getElementById('chatListPlaceholder').style.display = 'block';
+            document.getElementById('userInfo').textContent = 'Not logged in';
+            document.getElementById('adminBadge').style.display = 'none';
+            document.getElementById('messagesList').innerHTML = '<div class="empty-state">Select a chat</div>';
+            document.getElementById('messageInput').style.display = 'none';
+            document.getElementById('chatTitle').textContent = 'Select a chat';
+            document.getElementById('chatEditSection').style.display = 'none';
+        }
+
+        function showLoggedIn() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('loggedInSection').style.display = 'block';
+            document.getElementById('chatListSection').style.display = 'block';
+            document.getElementById('chatListPlaceholder').style.display = 'none';
+            document.getElementById('userInfo').textContent = currentUsername;
+            document.getElementById('adminBadge').style.display = isAdmin ? 'inline' : 'none';
+        }
+
+        function refreshAll() { loadUsers(); loadChats(); }
+
+        // Users
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API}/api/users/list`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const users = await res.json();
+                    document.getElementById('usersList').innerHTML = users.map(u => `
+                        <div class="user-item">
+                            <span class="username">${u.username}</span>
+                            ${u.is_admin ? '<span class="badge admin">Admin</span>' : ''}
+                        </div>
+                    `).join('') || '<div class="empty-state">No users</div>';
+                }
+            } catch { }
+        }
+
+        async function searchUsers() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) { document.getElementById('searchResults').innerHTML = ''; return; }
+            try {
+                const res = await fetch(`${API}/api/users/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ query })
+                });
+                if (res.ok) {
+                    const users = await res.json();
+                    document.getElementById('searchResults').innerHTML = users.map(u => `
+                        <div class="user-item">
+                            <span class="username">${u.username}</span>
+                            ${u.is_admin ? '<span class="badge admin">Admin</span>' : ''}
+                        </div>
+                    `).join('') || '<div class="empty-state">No results</div>';
+                }
+            } catch { }
+        }
+
+        // Chats
+        async function loadChats() {
+            try {
+                const res = await fetch(`${API}/api/chats`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const chats = await res.json();
+                    document.getElementById('chatList').innerHTML = chats.map(c => `
+                        <div class="list-item ${c.id === currentChatId ? 'active' : ''}" onclick="selectChat(${c.id}, '${(c.name || 'Chat').replace(/'/g, "\\'")}')">
+                            <div class="title">${c.name || 'Unnamed'}</div>
+                            <div class="subtitle">ID: ${c.id}</div>
+                        </div>
+                    `).join('') || '<div class="empty-state">No chats</div>';
+                }
+            } catch { }
+        }
+
+        async function createChat() {
+            const name = document.getElementById('newChatName').value.trim();
+            const participants = document.getElementById('newChatParticipants').value.split(',').map(p => p.trim()).filter(p => p);
+            try {
+                const res = await fetch(`${API}/api/chats`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, participants })
+                });
+                if (res.ok) {
+                    document.getElementById('newChatName').value = '';
+                    document.getElementById('newChatParticipants').value = '';
+                    loadChats();
+                    toast('Chat created!', 'success');
+                } else toast((await res.json()).detail || 'Failed', 'error');
+            } catch { toast('Connection error', 'error'); }
+        }
+
+        async function selectChat(chatId, chatName) {
+            currentChatId = chatId;
+            document.getElementById('chatTitle').textContent = chatName;
+            document.getElementById('chatId').textContent = `#${chatId}`;
+            document.getElementById('messageInput').style.display = 'flex';
+            document.getElementById('chatEditSection').style.display = 'block';
+            document.getElementById('editChatName').value = chatName;
+            document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
+            event?.currentTarget?.classList.add('active');
+            await loadMessages(chatId);
+            await loadParticipants(chatId);
+            connectWebSocket(chatId);
+        }
+
+        async function updateChat() {
+            const name = document.getElementById('editChatName').value.trim();
+            if (!name) return;
+            try {
+                const res = await fetch(`${API}/api/chats/${currentChatId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name })
+                });
+                if (res.ok) {
+                    document.getElementById('chatTitle').textContent = name;
+                    loadChats();
+                    toast('Chat updated!', 'success');
+                } else toast((await res.json()).detail || 'Failed', 'error');
+            } catch { toast('Connection error', 'error'); }
+        }
+
+        // Participants
+        async function loadParticipants(chatId) {
+            try {
+                const res = await fetch(`${API}/api/users/list/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const users = await res.json();
+                    document.getElementById('participantsList').innerHTML = users.map(u => `
+                        <div class="user-item">
+                            <span class="username">${u.username}</span>
+                            <button class="btn btn-danger btn-sm" onclick="removeParticipant('${u.username}')">×</button>
+                        </div>
+                    `).join('') || '<div class="empty-state">No participants</div>';
+                }
+            } catch { }
+        }
+
+        async function addParticipant() {
+            const username = document.getElementById('addParticipantName').value.trim();
+            if (!username) return;
+            try {
+                const res = await fetch(`${API}/api/chats/${currentChatId}/participants`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ username })
+                });
+                if (res.ok) {
+                    document.getElementById('addParticipantName').value = '';
+                    loadParticipants(currentChatId);
+                    toast('Participant added!', 'success');
+                } else toast((await res.json()).detail || 'Failed', 'error');
+            } catch { toast('Connection error', 'error'); }
+        }
+
+        async function removeParticipant(username) {
+            try {
+                const res = await fetch(`${API}/api/chats/${currentChatId}/participants/${username}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    loadParticipants(currentChatId);
+                    toast('Participant removed!', 'success');
+                } else toast((await res.json()).detail || 'Failed', 'error');
+            } catch { toast('Connection error', 'error'); }
+        }
+
+        // Messages
+        async function loadMessages(chatId) {
+            try {
+                const res = await fetch(`${API}/api/chats/${chatId}/messages`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const msgs = await res.json();
+                    renderMessages(msgs);
+                }
+            } catch { }
+        }
+
+        function renderMessages(msgs) {
+            const list = document.getElementById('messagesList');
+            if (!msgs.length) { list.innerHTML = '<div class="empty-state">No messages yet</div>'; return; }
+            list.innerHTML = msgs.map(m => `
+                <div class="message ${m.sender_username === currentUsername ? 'own' : ''}">
+                    <div class="sender">${m.sender_username || 'Unknown'}</div>
+                    <div class="content">${escapeHtml(m.content)}</div>
+                    <div class="time">${new Date(m.sent_at).toLocaleTimeString()}</div>
+                </div>
+            `).join('');
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function addMessage(msg) {
+            const list = document.getElementById('messagesList');
+            list.querySelector('.empty-state')?.remove();
+            const div = document.createElement('div');
+            div.className = `message ${msg.sender === currentUsername ? 'own' : ''}`;
+            div.innerHTML = `<div class="sender">${msg.sender || 'Unknown'}</div><div class="content">${escapeHtml(msg.content)}</div><div class="time">${new Date(msg.sent_at).toLocaleTimeString()}</div>`;
+            list.appendChild(div);
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const list = document.getElementById('messagesList');
+            const div = document.createElement('div');
+            div.className = 'message system';
+            div.textContent = text;
+            list.appendChild(div);
+            list.scrollTop = list.scrollHeight;
+        }
+
+        // WebSocket
+        function connectWebSocket(chatId) {
+            if (ws) ws.close();
+            ws = new WebSocket(`ws://localhost:8000/ws/${chatId}?token=${token}`);
+            ws.onopen = () => { document.getElementById('wsStatus').classList.add('connected'); addSystemMessage('Connected'); };
+            ws.onclose = () => { document.getElementById('wsStatus').classList.remove('connected'); };
+            ws.onerror = () => toast('WebSocket error', 'error');
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'message') addMessage(data);
+                else if (data.type === 'user_joined') addSystemMessage(`${data.username} joined`);
+                else if (data.type === 'user_left') addSystemMessage(`${data.username} left`);
+            };
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageText');
+            const content = input.value.trim();
+            if (!content || !ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ content }));
+            input.value = '';
+        }
+
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    </script>
+</body>
+
+</html>

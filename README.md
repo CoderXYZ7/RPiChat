@@ -29,11 +29,8 @@ flowchart LR
     device2["User B"] <--> api
     device3["User C"] <--> api
 
-    chat1@{ shape: cyl}
-    chat2@{ shape: cyl}
-    chat3@{ shape: cyl}
-    chatp@{ shape: cyl}
-    accountt@{ shape: db}
+
+
     orc@{ shape: lean-l}
     san@{ shape: lean-l}
     api@{ shape: rect}
