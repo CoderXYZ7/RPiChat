@@ -13,7 +13,7 @@
         android:layout_width="257dp"
         android:layout_height="231dp"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="48dp"
         android:layout_marginEnd="32dp"
         android:adjustViewBounds="true"
         android:contentDescription="A New Way to Chat"
@@ -42,24 +42,41 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/titleImage" />
 
-    <!-- Password Input -->
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/passwordInput"
+    <!-- Password row with visibility toggle -->
+    <RelativeLayout
+        android:id="@+id/passwordRow"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="32dp"
-        android:background="@drawable/bg_input_underline"
-        android:hint="Strong password"
-        android:inputType="textPassword"
-        android:padding="16dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/mid_gray"
-        android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/usernameInput" />
+        app:layout_constraintTop_toBottomOf="@+id/usernameInput">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/passwordInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_input_underline"
+            android:hint="Strong password"
+            android:inputType="textPassword"
+            android:padding="16dp"
+            android:paddingEnd="56dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/mid_gray"
+            android:textSize="20sp" />
+
+        <ImageButton
+            android:id="@+id/togglePassword"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@android:color/transparent"
+            android:contentDescription="Toggle password visibility"
+            android:src="@drawable/ic_eye" />
+    </RelativeLayout>
 
     <!-- Server URL Input -->
     <com.google.android.material.textfield.TextInputEditText
@@ -78,43 +95,48 @@
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/passwordInput" />
+        app:layout_constraintTop_toBottomOf="@+id/passwordRow" />
 
-
-    <!-- Action Button (Login/Register) -->
-    <!-- Make it a bit shorter width like in the mock -->
-    <Button
-        android:id="@+id/actionButton"
-        android:layout_width="wrap_content"
+    <!-- Login + Register buttons side by side -->
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
         android:layout_marginTop="48dp"
-        android:background="@drawable/bg_button_square"
-        android:text="Login"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:paddingStart="32dp"
-        android:paddingEnd="32dp"
+        android:layout_marginEnd="32dp"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/serverIpInput" />
+        app:layout_constraintTop_toBottomOf="@+id/serverIpInput">
 
-    <!-- Toggle Mode Text -->
-    <TextView
-        android:id="@+id/toggleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="32dp"
-        android:padding="8dp"
-        android:text="Don't have an account? Sign up"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@+id/actionButton"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <Button
+            android:id="@+id/buttonLogin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_button_square"
+            android:text="Login"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp" />
 
-    <!-- A hidden title text view so the java code doesn't crash if it tries to set it -->
+        <Button
+            android:id="@+id/buttonRegister"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_button_square"
+            android:text="Register"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp" />
+    </LinearLayout>
+
+    <!-- Hidden titleText kept for backward compat with any saved state -->
     <TextView
         android:id="@+id/titleText"
         android:layout_width="wrap_content"

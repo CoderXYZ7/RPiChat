@@ -6,61 +6,58 @@
     android:padding="8dp"
     android:gravity="top">
 
-    <!-- Square avatar for incoming -->
+    <!-- Square avatar for incoming messages (shown on left) -->
     <View
         android:id="@+id/avatarIncoming"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="8dp"
         android:background="#FFFFFF"
         android:visibility="gone" />
 
+    <!-- Message bubble — wrap_content so it doesn't span full width -->
     <LinearLayout
         android:id="@+id/messageContainer"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:maxWidth="280dp"
         android:background="@color/light_gray"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:minHeight="64dp">
+        android:padding="12dp">
+
+        <!-- Sender name — visible for group context, hidden for outgoing by code -->
+        <TextView
+            android:id="@+id/senderText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#555555"
+            android:layout_marginBottom="2dp" />
 
         <TextView
             android:id="@+id/contentText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Message Content"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textColor="#000000" />
-            
-        <TextView
-            android:id="@+id/senderText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sender"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="#555555"
-            android:visibility="gone" />
 
         <TextView
             android:id="@+id/timeText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="12:00 PM"
             android:textSize="10sp"
             android:textColor="#888888"
             android:layout_gravity="end"
-            android:layout_marginTop="4dp"
-            android:visibility="gone" />
+            android:layout_marginTop="4dp" />
     </LinearLayout>
 
-    <!-- Square avatar for outgoing -->
+    <!-- Square avatar for outgoing messages (shown on right) -->
     <View
         android:id="@+id/avatarOutgoing"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="16dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
         android:background="#FFFFFF"
         android:visibility="gone" />
 

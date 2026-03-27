@@ -2,9 +2,10 @@ package com.danieletoniolo.Chatastic;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,9 +26,9 @@ import retrofit2.Response;
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText usernameInput, passwordInput, serverIpInput;
-    private Button actionButton;
-    private TextView toggleText, titleText;
-    private boolean isLoginMode = true;
+    private Button buttonLogin, buttonRegister;
+    private ImageButton togglePassword;
+    private boolean passwordVisible = false;
     private ApiService apiService;
     private SessionManager sessionManager;
 
@@ -40,7 +41,6 @@ public class LoginActivity extends AppCompatActivity {
 
         // Check if already logged in
         if (sessionManager.getAuthToken() != null) {
-            // Ensure client is initialized with saved IP
             String savedIp = sessionManager.getServerIp();
             ApiClient.setBaseUrl("http://" + savedIp + ":8000/");
             startActivity(new Intent(this, MainActivity.class));
@@ -51,53 +51,47 @@ public class LoginActivity extends AppCompatActivity {
         usernameInput = findViewById(R.id.usernameInput);
         passwordInput = findViewById(R.id.passwordInput);
         serverIpInput = findViewById(R.id.serverIpInput);
-        actionButton = findViewById(R.id.actionButton);
-        toggleText = findViewById(R.id.toggleText);
-        titleText = findViewById(R.id.titleText);
+        buttonLogin = findViewById(R.id.buttonLogin);
+        buttonRegister = findViewById(R.id.buttonRegister);
+        togglePassword = findViewById(R.id.togglePassword);
 
-        // Pre-fill IP
         serverIpInput.setText(sessionManager.getServerIp());
 
-        actionButton.setOnClickListener(v -> handleAuth());
-        toggleText.setOnClickListener(v -> toggleMode());
+        buttonLogin.setOnClickListener(v -> handleLogin());
+        buttonRegister.setOnClickListener(v -> handleRegister());
+
+        togglePassword.setOnClickListener(v -> {
+            passwordVisible = !passwordVisible;
+            if (passwordVisible) {
+                passwordInput.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+            } else {
+                passwordInput.setTransformationMethod(PasswordTransformationMethod.getInstance());
+            }
+            // Keep cursor at end
+            passwordInput.setSelection(passwordInput.getText() != null ? passwordInput.getText().length() : 0);
+        });
     }
 
-    private void toggleMode() {
-        isLoginMode = !isLoginMode;
-        if (isLoginMode) {
-            titleText.setText("Welcome Back");
-            actionButton.setText("Login");
-            toggleText.setText("Don't have an account? Sign up");
-        } else {
-            titleText.setText("Create Account");
-            actionButton.setText("Register");
-            toggleText.setText("Already have an account? Login");
-        }
-    }
-
-    private void handleAuth() {
+    private boolean validateInputs() {
         String username = usernameInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
         String ip = serverIpInput.getText().toString().trim();
 
         if (username.isEmpty() || password.isEmpty() || ip.isEmpty()) {
             Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
-
-        // Configure API Client
         ApiClient.setBaseUrl("http://" + ip + ":8000/");
         apiService = ApiClient.getClient();
         sessionManager.saveServerIp(ip);
-
-        if (isLoginMode) {
-            login(username, password);
-        } else {
-            register(username, password);
-        }
+        return true;
     }
 
-    private void login(String username, String password) {
+    private void handleLogin() {
+        if (!validateInputs()) return;
+        String username = usernameInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+
         LoginRequest request = new LoginRequest(username, password);
         apiService.login(request).enqueue(new Callback<AuthResponse>() {
             @Override
@@ -105,12 +99,10 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     sessionManager.saveAuthToken("Bearer " + response.body().getAccessToken());
                     sessionManager.saveUsername(username);
-                    Toast.makeText(LoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
-                    // Navigate to Main
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Login Failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -121,17 +113,19 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void register(String username, String password) {
+    private void handleRegister() {
+        if (!validateInputs()) return;
+        String username = usernameInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+
         RegisterRequest request = new RegisterRequest(username, password);
         apiService.register(request).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(LoginActivity.this, "Registration Successful! Please Login.", Toast.LENGTH_SHORT)
-                            .show();
-                    toggleMode(); // Switch to login
+                    Toast.makeText(LoginActivity.this, "Registered! Please log in.", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Registration Failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Registration failed", Toast.LENGTH_SHORT).show();
                 }
             }
 

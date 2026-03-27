@@ -1,5 +1,6 @@
 package com.danieletoniolo.Chatastic;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -85,6 +86,17 @@ public class ChatActivity extends AppCompatActivity {
         sendButton = findViewById(R.id.sendButton);
 
         sendButton.setOnClickListener(v -> sendMessage());
+
+        // Bottom nav
+        ImageButton navChatList = findViewById(R.id.navChatList);
+        ImageButton navSettings = findViewById(R.id.navSettings);
+        navChatList.setOnClickListener(v -> {
+            Intent intent = new Intent(ChatActivity.this, ChatListActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
+        navSettings.setOnClickListener(v -> startActivity(new Intent(ChatActivity.this, SettingsActivity.class)));
 
         loadMessages();
         connectWebSocket();
@@ -218,18 +230,26 @@ public class ChatActivity extends AppCompatActivity {
             Message message = messages.get(position);
             boolean isMe = message.getSenderUsername() != null && message.getSenderUsername().equals(username);
 
-            holder.senderText.setText(message.getSenderUsername());
             holder.contentText.setText(message.getContent());
-            holder.timeText.setText(message.getSentAt()); // You might want to format this
 
-            // Styling for me vs them
+            // Show timestamp formatted as HH:MM if available
+            String sentAt = message.getSentAt();
+            if (sentAt != null && sentAt.length() >= 16) {
+                holder.timeText.setText(sentAt.substring(11, 16));
+            } else {
+                holder.timeText.setText(sentAt != null ? sentAt : "");
+            }
+
             if (isMe) {
                 holder.container.setBackgroundResource(R.drawable.bg_message_me);
+                holder.senderText.setVisibility(View.GONE);
                 ((LinearLayout) holder.itemView).setGravity(Gravity.END);
                 holder.avatarIncoming.setVisibility(View.GONE);
                 holder.avatarOutgoing.setVisibility(View.VISIBLE);
             } else {
                 holder.container.setBackgroundResource(R.drawable.bg_message_other);
+                holder.senderText.setVisibility(View.VISIBLE);
+                holder.senderText.setText(message.getSenderUsername());
                 ((LinearLayout) holder.itemView).setGravity(Gravity.START);
                 holder.avatarIncoming.setVisibility(View.VISIBLE);
                 holder.avatarOutgoing.setVisibility(View.GONE);

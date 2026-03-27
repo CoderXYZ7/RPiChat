@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,7 +19,6 @@ import com.danieletoniolo.Chatastic.api.ApiService;
 import com.danieletoniolo.Chatastic.api.SessionManager;
 import com.danieletoniolo.Chatastic.model.Chat;
 import com.danieletoniolo.Chatastic.model.ChatRequest;
-import android.widget.ImageButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
@@ -33,7 +33,6 @@ public class ChatListActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ChatAdapter adapter;
-    private ImageButton buttonClose;
     private ApiService apiService;
     private SessionManager sessionManager;
     private String token;
@@ -59,12 +58,16 @@ public class ChatListActivity extends AppCompatActivity {
         adapter = new ChatAdapter();
         recyclerView.setAdapter(adapter);
 
-        buttonClose = findViewById(R.id.buttonClose);
-        buttonClose.setOnClickListener(v -> {
-            sessionManager.clear();
-            startActivity(new Intent(ChatListActivity.this, LoginActivity.class));
-            finish();
-        });
+        // + button → create new chat
+        ImageButton buttonNewChat = findViewById(R.id.buttonNewChat);
+        buttonNewChat.setOnClickListener(v -> showCreateChatDialog());
+
+        // Bottom nav
+        ImageButton navChatList = findViewById(R.id.navChatList);
+        ImageButton navSettings = findViewById(R.id.navSettings);
+        navChatList.setEnabled(false);
+        navChatList.setAlpha(0.5f);
+        navSettings.setOnClickListener(v -> startActivity(new Intent(ChatListActivity.this, SettingsActivity.class)));
 
         loadChats();
     }
@@ -99,8 +102,10 @@ public class ChatListActivity extends AppCompatActivity {
                     String name = nameInput.getText().toString().trim();
                     String participantsStr = participantsInput.getText().toString().trim();
                     if (!name.isEmpty() && !participantsStr.isEmpty()) {
-                        List<String> participants = Arrays.asList(participantsStr.split(","));
+                        List<String> participants = Arrays.asList(participantsStr.split("\\s*,\\s*"));
                         createChat(name, participants);
+                    } else {
+                        Toast.makeText(this, "Name and participants required", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", null)
@@ -113,7 +118,7 @@ public class ChatListActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Chat> call, Response<Chat> response) {
                 if (response.isSuccessful()) {
-                    loadChats(); // Refresh list
+                    loadChats();
                     Toast.makeText(ChatListActivity.this, "Chat created", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(ChatListActivity.this, "Failed to create chat", Toast.LENGTH_SHORT).show();
