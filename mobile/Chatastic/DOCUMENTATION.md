@@ -16,7 +16,8 @@ Full explanation of the Android client from design, logic, and development persp
    - 3.2 Authentication Flow
    - 3.3 Chat List Flow
    - 3.4 Real-time Messaging Flow
-   - 3.5 Data Models
+   - 3.5 Message Rendering Logic
+   - 3.6 Data Models
 4. [Development Perspective](#4-development-perspective)
    - 4.1 Project Structure
    - 4.2 Build Configuration
@@ -84,20 +85,17 @@ The theme extends `Theme.AppCompat.NoActionBar` — no system action bar is show
 
 #### Login Screen (`activity_login.xml`)
 
-```
-┌─────────────────────────────┐
-│                             │
-│    [A New Way to Chat img]  │
-│                             │
-│  ________________________   │
-│  Username                   │
-│  ________________________   │
-│  Password             [👁]  │
-│  ________________________   │
-│  Server url                 │
-│                             │
-│  [ LOGIN ]   [ REGISTER ]   │
-└─────────────────────────────┘
+```mermaid
+graph TD
+    A[activity_login\nbackground: bg_login.png] --> B[ImageView\ntitle_login.png]
+    A --> C[TextInputEditText\nUsername]
+    A --> D[RelativeLayout: Password Row]
+    D --> D1[TextInputEditText\nPassword]
+    D --> D2[ImageButton\n👁 visibility toggle]
+    A --> E[TextInputEditText\nServer URL]
+    A --> F[LinearLayout\nhorizontal]
+    F --> F1[Button\nLOGIN]
+    F --> F2[Button\nREGISTER]
 ```
 
 - Background: wavy blob PNG (`bg_login.png`) sourced from the Haikei design tool.
@@ -108,74 +106,66 @@ The theme extends `Theme.AppCompat.NoActionBar` — no system action bar is show
 
 #### Chat List Screen (`activity_chat_list.xml`)
 
-```
-┌─────────────────────────────┐
-│     [✕ logo]          [+]   │  ← 64dp top bar
-│ ┌─────────────────────────┐ │
-│ │  Search                 │ │  ← rounded white input
-│ └─────────────────────────┘ │
-│                             │
-│ [▪] Chat Name               │  ← RecyclerView
-│     Latest Message          │
-│ [▪] Chat Name               │
-│     Latest Message          │
-│           ...               │
-│                             │
-│ [≡]      [ⓘ]      [⚙]      │  ← 64dp bottom nav
-└─────────────────────────────┘
+```mermaid
+graph TD
+    A[activity_chat_list\nbackground: dark_bg] --> B[RelativeLayout\nTop Bar — 64dp]
+    B --> B1[ImageButton ✕\ncentered — brand logo]
+    B --> B2[ImageButton +\ntop-right — new chat]
+    A --> C[EditText\nSearch — bg_search rounded white]
+    A --> D[RecyclerView\nChat List]
+    D --> D1[item_chat\n56dp avatar · name · Latest Message]
+    A --> E[include: layout_bottom_nav]
+    E --> E1[≡ Chat List\ndisabled on this screen]
+    E --> E2[ⓘ Info]
+    E --> E3[⚙ Settings]
 ```
 
-- Dark background (`dark_bg`).
 - Top bar: the centred `✕` icon is a non-navigating brand logo. The `+` button in the top-right opens the "Create New Chat" dialog.
 - Search bar: white fill with 4dp rounded corners (`bg_search.xml`), black text. Currently a visual-only element — filtering is not implemented.
-- Each chat row (item_chat.xml): 56×56dp white square avatar + chat name in 20sp white + "Latest Message" subtitle in 14sp mid-grey.
-- Bottom nav (`layout_bottom_nav.xml`): three equal-weight `ImageButton`s for Chat List (disabled/dimmed on this screen), Info, and Settings.
+- Each chat row (`item_chat.xml`): 56×56dp white square avatar + chat name in 20sp white + "Latest Message" subtitle in 14sp mid-grey.
+- Bottom nav: three equal-weight `ImageButton`s; the Chat List icon is disabled and dimmed on this screen.
 
 #### Chat Screen (`activity_chat.xml`)
 
-```
-┌─────────────────────────────┐
-│ [✕]  Chat Name              │  ← 64dp top bar
-│                             │
-│         [▪] Hello!          │  ← incoming msg
-│             Alice    12:30  │
-│                             │
-│  Hi there! [▪]              │  ← outgoing msg
-│  12:31                      │
-│                             │
-│ [ Type a message...  ] [➤] │  ← input + send
-│ [≡]      [ⓘ]      [⚙]      │  ← bottom nav
-└─────────────────────────────┘
+```mermaid
+graph TD
+    A[activity_chat\nbackground: dark_bg] --> B[RelativeLayout\nTop Bar — 64dp]
+    B --> B1[ImageButton ✕\nalignParentStart — closes activity]
+    B --> B2[TextView\nChat Name — 24sp]
+    A --> C[RecyclerView\nMessages]
+    C --> C1[item_message incoming\n40dp avatar left · white bubble · sender · time]
+    C --> C2[item_message outgoing\ngreen bubble · 40dp avatar right · time]
+    A --> D[LinearLayout\nInput Bar — darker_bg]
+    D --> D1[EditText\nType a message...]
+    D --> D2[ImageButton ➤\nSend]
+    A --> E[include: layout_bottom_nav]
 ```
 
 - `✕` button closes the activity (returns to the previous screen in the back-stack).
-- Messages in `RecyclerView` with two bubble styles. Bubble width is `wrap_content` with a `maxWidth` of `280dp` — short messages stay compact; the `Gravity` of the parent `LinearLayout` is set per-item to `END` or `START` to align bubbles.
-- Incoming: white bubble with border, 40×40dp white avatar on the left, sender name in 11sp bold above the content, timestamp bottom-right.
-- Outgoing: green bubble, 40×40dp white avatar on the right, no sender label, timestamp bottom-right.
-- Input bar has a dark background (`darker_bg`) and sits above the bottom nav.
-- Send button (`ic_send`) styled with the same `bg_button_square` outline.
+- Bubble width is `wrap_content` with `maxWidth="280dp"` — short messages stay compact. The `Gravity` of the parent `LinearLayout` per item is set to `END` or `START` to align bubbles left/right.
+- Incoming: white bubble with border, avatar on left, sender name visible, timestamp bottom-right.
+- Outgoing: green bubble, avatar on right, no sender label, timestamp bottom-right.
 
 #### Settings Screen (`activity_settings.xml`)
 
-```
-┌─────────────────────────────┐
-│ [✕]  Settings               │  ← 64dp top bar
-│                             │
-│  (wavy layered background)  │
-│                             │
-│  ________________________   │
-│  Server url       [~65% ↓]  │
-│                             │
-│  [ LOG OUT ]  [ IP CHANGE ] │
-│ [≡]      [ⓘ]      [⚙]      │
-└─────────────────────────────┘
+```mermaid
+graph TD
+    A[activity_settings\nbackground: bg_settings.png] --> B[RelativeLayout\nTop Bar — 64dp]
+    B --> B1[ImageButton ✕\nalignParentStart — goes back]
+    B --> B2[TextView\nSettings — 24sp]
+    A --> C[TextInputEditText\nServer URL\nvertical bias 65%]
+    A --> D[LinearLayout\nhorizontal — 16dp below input]
+    D --> D1[Button\nLOG OUT]
+    D --> D2[Button\nIP CHANGE]
+    A --> E[include: layout_bottom_nav]
+    E --> E1[≡ Chat List]
+    E --> E2[ⓘ Info]
+    E --> E3[⚙ Settings\ndisabled on this screen]
 ```
 
 - Background: layered waves PNG (`bg_settings.png`).
-- `✕` button goes back.
-- Server URL input vertically positioned at 65% of the space between the top bar and the bottom nav (using `constraintVertical_bias="0.65"`), so it sits in the lower half of the screen as shown in the reference design.
-- Two side-by-side buttons: **Log out** clears the session and goes to `LoginActivity`; **Ip change** saves the new IP and rebuilds the Retrofit client.
-- Bottom nav: Settings icon is dimmed/disabled on this screen.
+- Server URL input sits at `constraintVertical_bias="0.65"` between the top bar and the bottom nav, placing it in the lower half of the screen as in the reference design.
+- **Log out** clears the session and navigates to `LoginActivity`. **Ip change** saves the new IP and rebuilds the Retrofit client.
 
 ---
 
@@ -205,146 +195,194 @@ Horizontal `LinearLayout` of height 64dp with background `#202020`. Three equal-
 
 ### 3.1 Activity Flow & Navigation
 
-```
-[App Launch]
-     │
-     ▼
-LoginActivity ──(token exists)──► MainActivity ──► ChatListActivity
-     │                                                    │
-     │(login success)                             [tap chat row]
-     ▼                                                    │
-MainActivity ──────────────────────────────────► ChatListActivity
-                                                          │
-                                            [tap chat]   │
-                                                   ▼     │
-                                             ChatActivity │
-                                                          │
-                               [nav: settings] ◄──────────┘
-                                       │
-                                 SettingsActivity
+```mermaid
+flowchart TD
+    Launch([App Launch]) --> Login[LoginActivity]
+    Login -->|token exists in session| Main[MainActivity]
+    Login -->|login success| Main
+    Main -->|immediately| ChatList[ChatListActivity]
+    ChatList -->|tap chat row| Chat[ChatActivity]
+    ChatList -->|nav: settings| Settings[SettingsActivity]
+    Chat -->|nav: chat list\nFLAG_CLEAR_TOP| ChatList
+    Chat -->|nav: settings| Settings
+    Settings -->|nav: chat list| ChatList
+    Settings -->|logout| Login
+    Chat -->|back button| ChatList
+    Settings -->|back button / ✕| Previous[previous screen]
 ```
 
-- `MainActivity` is a transparent relay: it immediately starts `ChatListActivity` and calls `finish()`. Its only purpose is to be the post-login target, separating login routing from the chat list.
+- `MainActivity` is a transparent relay: it immediately starts `ChatListActivity` and calls `finish()`. Its only purpose is to be the post-login Intent target, keeping routing logic out of `ChatListActivity`.
 - All navigation uses explicit `Intent`s. There is no fragment-based navigation or NavGraph.
-- Back-stack: `ChatActivity` → back → `ChatListActivity`. `SettingsActivity` is layered on top of whatever called it.
-- Bottom nav in `ChatActivity` uses `FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_SINGLE_TOP` when going back to `ChatListActivity`, preventing duplicate instances from stacking.
+- `ChatActivity` → bottom nav → `ChatListActivity` uses `FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_SINGLE_TOP` to prevent duplicate instances from stacking.
+
+---
 
 ### 3.2 Authentication Flow
 
-```
-User enters username + password + server IP
-        │
-        ▼
-validateInputs()
-  ├── empty check → Toast + abort
-  └── ApiClient.setBaseUrl("http://<ip>:8000/")  ← rebuilds Retrofit
-        │
-        ▼
-  handleLogin()                   handleRegister()
-  POST /api/auth/login            POST /api/auth/register
-        │                               │
-  200 OK → AuthResponse           200 OK → User
-  saveAuthToken("Bearer " + token)      │
-  saveUsername(username)          Toast "Registered! Please log in."
-        │
-        ▼
-  startActivity(MainActivity)
-  finish()
+```mermaid
+flowchart TD
+    Input([User fills\nusername · password · server IP]) --> Validate[validateInputs]
+    Validate -->|any field empty| Abort[Toast: Please fill all fields\nabort]
+    Validate -->|all filled| SetUrl[ApiClient.setBaseUrl\nhttp://ip:8000/\nSessionManager.saveServerIp]
+
+    SetUrl --> Which{which button?}
+    Which -->|Login| PostLogin[POST /api/auth/login]
+    Which -->|Register| PostReg[POST /api/auth/register]
+
+    PostLogin -->|200 OK| SaveSession[saveAuthToken Bearer + jwt\nsaveUsername]
+    PostLogin -->|error / non-200| ToastFail1[Toast: Login failed]
+    PostLogin -->|network failure| ToastErr1[Toast: Error + message]
+
+    SaveSession --> Navigate[startActivity MainActivity\nfinish]
+
+    PostReg -->|200 OK| ToastOK[Toast: Registered! Please log in.]
+    PostReg -->|error / non-200| ToastFail2[Toast: Registration failed]
+    PostReg -->|network failure| ToastErr2[Toast: Error + message]
 ```
 
-- The server IP is stored without scheme in `SessionManager`. On app restart, `LoginActivity.onCreate()` reads it and calls `ApiClient.setBaseUrl()` before routing to `ChatListActivity`, so the Retrofit instance is always pointing at the correct server.
-- The token is stored as the full `Authorization` header value (`"Bearer <jwt>"`), so it can be passed directly to `@Header("Authorization")` in `ApiService` calls without any further manipulation.
-- Registration does **not** auto-login — the user must press Login after registering.
+- The server IP is stored **without** scheme in `SessionManager`. On restart, `LoginActivity` reads it and calls `ApiClient.setBaseUrl()` before forwarding to `ChatListActivity`, so Retrofit always points at the right server.
+- The token is stored as the full header value (`"Bearer <jwt>"`), ready to pass directly to `@Header("Authorization")` without further manipulation.
+- Registration does **not** auto-login — the user must press Login afterwards.
+
+---
 
 ### 3.3 Chat List Flow
 
-```
-ChatListActivity.onCreate()
-  │
-  ├── Check token → null → redirect to LoginActivity
-  │
-  ├── GET /api/chats (with token)
-  │     └── adapter.setChats(list) → RecyclerView renders
-  │
-  ├── buttonNewChat → showCreateChatDialog()
-  │     ├── user fills name + comma-separated participants
-  │     └── POST /api/chats → on success → loadChats() (refresh)
-  │
-  └── navSettings → startActivity(SettingsActivity)
+```mermaid
+flowchart TD
+    Start([onCreate]) --> CheckToken{token\nin session?}
+    CheckToken -->|null| RedirectLogin[startActivity LoginActivity\nfinish]
+    CheckToken -->|present| LoadChats[GET /api/chats]
+
+    LoadChats -->|200 OK| Render[adapter.setChats\nRecyclerView renders]
+    LoadChats -->|error| ToastErr[Toast: Failed to load chats]
+
+    Render --> Idle([waiting for input])
+
+    Idle -->|+ button| Dialog[showCreateChatDialog\nAlertDialog with name + participants]
+    Dialog -->|confirm| Validate{name and\nparticipants filled?}
+    Validate -->|no| ToastVal[Toast: required]
+    Validate -->|yes| CreateChat[POST /api/chats]
+    CreateChat -->|success| LoadChats
+    CreateChat -->|error| ToastCreate[Toast: Failed to create chat]
+
+    Idle -->|tap chat row| OpenChat[startActivity ChatActivity\nextras: CHAT_ID · CHAT_NAME]
+    Idle -->|nav: settings| OpenSettings[startActivity SettingsActivity]
 ```
 
-- The search `EditText` is a UI-only element — there is no listener attached to it. It does not filter the list.
-- `ChatAdapter` is an inner class of `ChatListActivity`. Each row click passes `CHAT_ID` and `CHAT_NAME` as intent extras to `ChatActivity`.
+- The search `EditText` is visual-only — no text-change listener is attached; the list is not filtered.
+- `ChatAdapter` is an inner class; each row click forwards `CHAT_ID` (int) and `CHAT_NAME` (String) as intent extras.
+
+---
 
 ### 3.4 Real-time Messaging Flow
 
-```
-ChatActivity.onCreate()
-  │
-  ├── loadMessages()
-  │     GET /api/chats/{chatId}/messages
-  │     └── adapter.setMessages(history) → scrollToBottom()
-  │
-  └── connectWebSocket()
-        │
-        URL: ws://<host>:8000/ws/<chatId>?token=<jwt>
-        │
-        onOpen  → Toast "Connected"
-        onMessage → parse JSON
-          │
-          ├── type == "message" → Message msg = gson.fromJson(...)
-          │     adapter.addMessage(msg)
-          │     scrollToBottom()
-          │
-          └── other types (user_joined, etc.) → ignored
-        │
-        onFailure → Toast error
-        onClosing → webSocket.close(1000, null)
+#### Startup & WebSocket lifecycle
 
-sendMessage() [send button]
-  │
-  content = messageInput.getText()
-  json = { "content": "<text>" }
-  webSocketClient.send(json.toString())
-  messageInput.setText("")
+```mermaid
+flowchart TD
+    Start([onCreate]) --> LoadMsgs[GET /api/chats/id/messages]
+    LoadMsgs -->|200 OK| SetHistory[adapter.setMessages history\nscrollToBottom]
+    LoadMsgs -->|error| ToastErr[Toast: Error loading messages]
+
+    Start --> ConnectWS[connectWebSocket\nbuild ws URL from SessionManager]
+    ConnectWS --> WS[WebSocket\nws://host:8000/ws/chatId?token=jwt]
+
+    WS -->|onOpen| ToastConn[Toast: Connected]
+    WS -->|onMessage| ParseJSON[gson.fromJson to JsonObject]
+    ParseJSON -->|type == message| Deserialize[gson.fromJson to Message\nadapter.addMessage\nscrollToBottom]
+    ParseJSON -->|type == user_joined\nor user_left| Ignored[ignored]
+    WS -->|onFailure| ToastFail[Toast: Connection Error + reason]
+    WS -->|onClosing| CloseWS[webSocket.close 1000 null]
+
+    Destroy([onDestroy]) --> CloseClient[webSocketClient.close\ncode 1000]
 ```
 
-**Important dual-source handling in `Message.java`:**
-The REST history endpoint returns messages with a `sender_username` field; the WebSocket broadcast uses `sender` instead. The `Message` model uses `@SerializedName` on both fields and `getSenderUsername()` returns whichever is non-null, so the `MessageAdapter` works identically for both sources.
+#### Sending a message
 
-**Message rendering logic (in `onBindViewHolder`):**
+```mermaid
+flowchart LR
+    Tap([tap Send]) --> GetText[content = messageInput.getText.trim]
+    GetText -->|empty| Stop([abort])
+    GetText -->|not empty| Build[JsonObject\ncontent: text]
+    Build --> Send[webSocketClient.send json.toString]
+    Send --> Clear[messageInput.setText empty]
 ```
-isMe = getSenderUsername().equals(sessionManager.getUsername())
 
-if isMe:
-    background = bg_message_me (green)
-    senderText = GONE
-    gravity = END (right-align)
-    avatarIncoming = GONE, avatarOutgoing = VISIBLE
+**Dual-source field handling in `Message.java`:**
+The REST history endpoint returns `sender_username`; the WebSocket broadcast uses `sender`. Both fields carry `@SerializedName` annotations and `getSenderUsername()` returns whichever is non-null, so `MessageAdapter` works identically for both sources.
 
-else:
-    background = bg_message_other (white)
-    senderText = VISIBLE (set to sender name)
-    gravity = START (left-align)
-    avatarIncoming = VISIBLE, avatarOutgoing = GONE
+---
+
+### 3.5 Message Rendering Logic
+
+```mermaid
+flowchart TD
+    Bind([onBindViewHolder]) --> SetContent[contentText.setText content]
+    SetContent --> FormatTime{sentAt length\n>= 16?}
+    FormatTime -->|yes| SliceTime[timeText = sentAt 11..16\neg. 14:30]
+    FormatTime -->|no| RawTime[timeText = sentAt as-is]
+
+    SliceTime & RawTime --> IsMe{getSenderUsername\n== myUsername?}
+
+    IsMe -->|yes — outgoing| GreenBubble[bg_message_me green\nsenderText GONE\ngravity END right-align]
+    GreenBubble --> AvatarsOut[avatarIncoming GONE\navatarOutgoing VISIBLE]
+
+    IsMe -->|no — incoming| WhiteBubble[bg_message_other white+border\nsenderText VISIBLE with name\ngravity START left-align]
+    WhiteBubble --> AvatarsIn[avatarIncoming VISIBLE\navatarOutgoing GONE]
 ```
 
 **Timestamp formatting:** ISO-8601 strings from the server (e.g. `"2026-03-27T14:30:00"`) are sliced at characters 11–16 to extract `HH:MM`.
 
-### 3.5 Data Models
+---
 
-All model classes are plain POJOs in `model/`. Gson uses field names for deserialization unless overridden by `@SerializedName`.
+### 3.6 Data Models
 
-| Class | Fields | Notes |
-|-------|--------|-------|
-| `User` | `username`, `is_admin` | Returned from register and user-list endpoints |
-| `AuthResponse` | `access_token`, `token_type` | Returned from login |
-| `Chat` | `id`, `name`, `participants` (List\<String\>) | |
-| `Message` | `id`, `chat_id`, `sender_username` (@SerializedName), `sender` (@SerializedName), `content`, `sent_at`, `type` | Dual-field for REST vs WS |
-| `LoginRequest` | `username`, `password` | Sent to `/api/auth/login` |
-| `RegisterRequest` | `username`, `password` | Sent to `/api/auth/register` |
-| `ChatRequest` | `name`, `participants` (List\<String\>) | Sent to `POST /api/chats` |
-| `MessageRequest` | `content` | Defined but unused — messages are sent via WebSocket JSON, not REST |
+All model classes are plain POJOs in `model/`. Gson maps JSON keys to field names unless overridden by `@SerializedName`.
+
+```mermaid
+classDiagram
+    class User {
+        String username
+        boolean is_admin
+    }
+    class AuthResponse {
+        String access_token
+        String token_type
+    }
+    class Chat {
+        int id
+        String name
+        List~String~ participants
+    }
+    class Message {
+        int id
+        int chat_id
+        +SerializedName sender_username
+        +SerializedName sender
+        String content
+        String sent_at
+        String type
+        getSenderUsername() String
+    }
+    class LoginRequest {
+        String username
+        String password
+    }
+    class RegisterRequest {
+        String username
+        String password
+    }
+    class ChatRequest {
+        String name
+        List~String~ participants
+    }
+    class MessageRequest {
+        String content
+    }
+```
+
+> `MessageRequest` is defined but unused — messages are sent as raw WebSocket JSON, not via REST.
 
 ---
 
@@ -455,28 +493,26 @@ ApiService service = ApiClient.getClient();
 
 The OkHttp client attached to Retrofit has a `BODY`-level logging interceptor. In production this should be downgraded to `NONE` or gated behind `BuildConfig.DEBUG`.
 
-Default base URL is `http://10.0.2.2:8000/` — the AVD (emulator) alias for `localhost` on the host machine, which points at a backend running on the development PC.
+Default base URL is `http://10.0.2.2:8000/` — the AVD (emulator) alias for `localhost` on the host machine.
 
 #### `ApiService.java`
 
 Retrofit interface declaring all REST calls:
 
 ```java
-@POST("/api/auth/register")   Call<User>         register(@Body RegisterRequest);
-@POST("/api/auth/login")      Call<AuthResponse> login(@Body LoginRequest);
-@GET("/api/users/list")       Call<List<User>>   getUsers(@Header("Authorization") String);
-@GET("/api/chats")            Call<List<Chat>>   getChats(@Header("Authorization") String);
-@POST("/api/chats")           Call<Chat>         createChat(@Header("Authorization") String, @Body ChatRequest);
+@POST("/api/auth/register")           Call<User>          register(@Body RegisterRequest);
+@POST("/api/auth/login")              Call<AuthResponse>  login(@Body LoginRequest);
+@GET("/api/users/list")               Call<List<User>>    getUsers(@Header("Authorization") String);
+@GET("/api/chats")                    Call<List<Chat>>    getChats(@Header("Authorization") String);
+@POST("/api/chats")                   Call<Chat>          createChat(@Header("Authorization") String, @Body ChatRequest);
 @GET("/api/chats/{chat_id}/messages") Call<List<Message>> getMessages(@Header("Authorization") String, @Path("chat_id") int);
 ```
 
-All authenticated endpoints receive the token as the full `Authorization` header string (`"Bearer <jwt>"`).
-
-All calls are executed asynchronously with `.enqueue(Callback<T>)` on the calling thread's Looper; Retrofit dispatches the callback on the main thread.
+All authenticated endpoints receive the token as the full `Authorization` header string (`"Bearer <jwt>"`). All calls use `.enqueue(Callback<T>)` — Retrofit dispatches callbacks on the main thread.
 
 ### 4.5 Session Management
 
-`SessionManager` wraps a `SharedPreferences` file named `"ChatasticSession"`. It is the single source of truth for the logged-in state.
+`SessionManager` wraps a `SharedPreferences` file named `"ChatasticSession"`. It is the single source of truth for logged-in state.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
@@ -486,45 +522,43 @@ All calls are executed asynchronously with `.enqueue(Callback<T>)` on the callin
 
 `clear()` removes all keys — this is the logout mechanism called from `SettingsActivity`.
 
-The server IP is stored **without** scheme or port. The scheme (`http://`) and port (`:8000`) are always appended programmatically when constructing URLs, keeping the stored value clean and reusable for both HTTP (`ApiClient`) and WebSocket (`connectWebSocket()`) connection strings.
+The server IP is stored **without** scheme or port. Both `ApiClient` (`http://`) and `connectWebSocket()` (`ws://`) append the scheme and port `:8000` programmatically, keeping the stored value clean and reusable.
 
 ### 4.6 WebSocket Client
 
-`WebSocketClient` is a thin wrapper around OkHttp's `WebSocket` API. It holds a single socket instance and exposes three methods:
+`WebSocketClient` is a thin wrapper around OkHttp's `WebSocket` API:
 
 ```java
-connect(String url, WebSocketListener listener)  // Opens the connection
-send(String text)                                // Sends a text frame
-close()                                          // Closes with code 1000
+connect(String url, WebSocketListener listener)  // opens connection
+send(String text)                                // sends a text frame
+close()                                          // closes with code 1000
 ```
 
-The listener is implemented inline in `ChatActivity.connectWebSocket()`. All listener callbacks (except `onMessage` text parsing) are dispatched to the main thread via `runOnUiThread()`.
+The listener is implemented inline in `ChatActivity.connectWebSocket()`. Callbacks are dispatched to the main thread via `runOnUiThread()`. The socket is closed in `ChatActivity.onDestroy()` to prevent leaks.
 
-The WebSocket URL is built at connection time:
+The WebSocket URL is built from `SessionManager` at connection time:
 
-```java
-// serverIp = "192.168.1.50" (from SessionManager)
-// token    = "Bearer eyJ..." (from SessionManager, prefix stripped)
-"ws://192.168.1.50:8000/ws/<chatId>?token=<jwt>"
+```
+ws://<serverIp>:8000/ws/<chatId>?token=<jwt>
 ```
 
-The socket is closed in `ChatActivity.onDestroy()`, preventing leaks when the activity is destroyed.
+The input sanitiser strips any `http://`/`https://` prefix and trailing slashes from the stored IP, and appends `:8000` if no port is present.
 
 ### 4.7 RecyclerView Adapters
 
-Both adapters are **inner classes** of their parent Activity, giving them direct access to the activity's fields (token, username, context) without needing constructor injection.
+Both adapters are **inner classes** of their parent Activity, giving them direct access to fields like `username` and `token` without constructor injection.
 
 #### `ChatAdapter` (inside `ChatListActivity`)
 
-- `setChats(List<Chat>)` replaces the entire list and calls `notifyDataSetChanged()`.
-- Each item view inflates `item_chat.xml`. The `ViewHolder` holds only `chatName` (TextView).
-- Click listener on each row starts `ChatActivity` with `CHAT_ID` and `CHAT_NAME` extras.
+- `setChats(List<Chat>)` — replaces the full list, calls `notifyDataSetChanged()`.
+- `ViewHolder` holds only `chatName` (TextView).
+- Each row click starts `ChatActivity` with `CHAT_ID` and `CHAT_NAME` extras.
 
 #### `MessageAdapter` (inside `ChatActivity`)
 
-- `setMessages(List<Message>)` — loads message history (called after REST fetch).
-- `addMessage(Message)` — appends a single new message (called per WebSocket event) and calls `notifyItemInserted()` for efficient incremental updates.
-- `onBindViewHolder` applies all visual differentiation (bubble colour, gravity, avatar visibility, sender label) for each message.
+- `setMessages(List<Message>)` — loads message history after the REST fetch.
+- `addMessage(Message)` — appends one item and calls `notifyItemInserted()` for efficient live updates.
+- `onBindViewHolder` drives all visual differentiation: bubble colour, layout gravity, avatar visibility, and sender label.
 
 ---
 
@@ -547,31 +581,45 @@ All HTTP calls go to `http://<server-ip>:8000`.
 
 **Connection URL:** `ws://<host>:8000/ws/<chat_id>?token=<jwt>`
 
-The JWT is passed as a query parameter because WebSocket handshakes cannot carry custom headers in browser/Android clients.
+The JWT is passed as a query parameter because WebSocket handshakes cannot carry custom headers in standard Android/browser clients.
 
-**Incoming frame (server → client):**
+```mermaid
+sequenceDiagram
+    participant App as Chatastic (Android)
+    participant WS as Backend WebSocket
 
-```json
-{
-  "type": "message",
-  "id": 42,
-  "sender": "alice",
-  "content": "Hello!",
-  "sent_at": "2026-03-27T14:30:00"
-}
+    App->>WS: connect ws://host/ws/chatId?token=jwt
+    WS-->>App: 101 Switching Protocols (onOpen)
+
+    App->>WS: {"content": "Hello!"}
+    WS-->>App: {"type":"message","id":42,"sender":"alice","content":"Hello!","sent_at":"..."}
+    WS-->>App: {"type":"user_joined","username":"bob"}
+
+    App->>WS: close(1000)
+    WS-->>App: onClosing / onClosed
 ```
 
-`type` can also be `"user_joined"` or `"user_left"` — the client currently ignores these.
+**Incoming frame types:**
 
-**Outgoing frame (client → server):**
+| `type` | Fields | Client action |
+|--------|--------|---------------|
+| `message` | `id`, `sender`, `content`, `sent_at` | deserialise to `Message`, add to adapter |
+| `user_joined` | `username` | currently ignored |
+| `user_left` | `username` | currently ignored |
+
+**Outgoing frame:**
 
 ```json
-{
-  "content": "Hello!"
-}
+{ "content": "message text" }
 ```
 
-The backend associates the message with the authenticated user derived from the JWT, so no sender field needs to be sent.
+The backend derives the sender from the JWT — no sender field is needed in the outgoing payload.
 
-**Field name discrepancy:**
-REST responses use `sender_username`; WebSocket broadcasts use `sender`. `Message.java` handles both via `@SerializedName` annotations and a fallback getter.
+**Field name discrepancy between REST and WebSocket:**
+
+```mermaid
+flowchart LR
+    REST[REST GET /messages\nreturns sender_username] --> Model[Message.java\n@SerializedName on both fields\ngetSenderUsername returns\nfirst non-null]
+    WS[WebSocket broadcast\nreturns sender] --> Model
+    Model --> Adapter[MessageAdapter\nworks identically\nfor both sources]
+```
